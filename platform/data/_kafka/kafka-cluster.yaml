@@ -1,0 +1,84 @@
+# ─────────────────────────────────────────────────────────────────────────
+# Strimzi Kafka 클러스터 (KRaft 모드)
+# ─────────────────────────────────────────────────────────────────────────
+# KRaft 가 뭐야?
+#   Kafka 가 자체적으로 메타데이터 관리 (ZooKeeper 없이). Kafka 3.5+ 부터 안정.
+#   ZooKeeper 시절보다 운영 단순 + 쿼럼 빠름. PDF 4.1절 명시 채택.
+#
+# 노드 풀(node pool) 분리:
+#   - controller : 메타데이터 관리 (옛 ZooKeeper 역할)
+#   - broker     : 실제 메시지 저장/제공
+#   - 같은 Pod 가 두 역할 다 할 수도(혼합 모드) 있지만 분리하는 게 권장.
+#   - 학습용이라 둘 다 3개씩 (HA 최소).
+# ─────────────────────────────────────────────────────────────────────────
+
+# ─── Controller 노드 풀 ──────────────────────────────────────────
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: controller
+  namespace: data
+  labels:
+    strimzi.io/cluster: kafka                     # 아래 Kafka 클러스터 이름과 매칭
+spec:
+  replicas: 3                                     # 쿼럼 위해 홀수 (최소 3)
+  roles:
+    - controller                                  # 메타데이터 관리 전담
+  storage:
+    type: persistent-claim
+    size: 5Gi
+    deleteClaim: false
+---
+# ─── Broker 노드 풀 ───────────────────────────────────────────────
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: broker
+  namespace: data
+  labels:
+    strimzi.io/cluster: kafka
+spec:
+  replicas: 3                                     # PDF 4.1절: 3 broker
+  roles:
+    - broker                                      # 실제 메시지 저장
+  storage:
+    type: persistent-claim
+    size: 10Gi                                    # broker 는 메시지 저장이라 좀 더 크게
+    deleteClaim: false
+---
+# ─── Kafka 클러스터 본체 ──────────────────────────────────────────
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: kafka                                     # 'kafka' 라는 이름의 클러스터
+  namespace: data
+  annotations:
+    strimzi.io/node-pools: enabled                # 위에서 정의한 nodepool 사용
+    strimzi.io/kraft: enabled                     # KRaft 모드 활성
+spec:
+  kafka:
+    version: 3.8.0
+    metadataVersion: 3.8-IV0
+    listeners:
+      # plain : 같은 namespace 내 평문 통신 (학습용)
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      # tls : 향후 mTLS 적용 시 사용 (현재는 plain 만 사용)
+      - name: tls
+        port: 9093
+        type: internal
+        tls: true
+    config:
+      # 학습용 안전한 기본값
+      offsets.topic.replication.factor: 3
+      transaction.state.log.replication.factor: 3
+      transaction.state.log.min.isr: 2
+      default.replication.factor: 3
+      min.insync.replicas: 2
+  # KRaft 모드라 zookeeper 블록 없음.
+  entityOperator:
+    # KafkaTopic CRD 와 KafkaUser CRD 를 처리해주는 컨트롤러 (자동 생성/관리)
+    topicOperator: {}
+    userOperator: {}

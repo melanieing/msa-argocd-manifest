@@ -1,0 +1,17 @@
+# notification-service 용 PostgreSQL. 알림 발송 이력 저장 (PDF 2.2절).
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: notification-db
+  namespace: data
+spec:
+  instances: 2
+  imageName: ghcr.io/cloudnative-pg/postgresql:16
+  storage:
+    size: 5Gi
+  bootstrap:
+    initdb:
+      database: notification
+      owner: notification_app
+  monitoring:
+    enablePodMonitor: true

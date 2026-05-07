@@ -1,39 +1,30 @@
 # ─────────────────────────────────────────────────────────────────────────
-# 이 파일은 뭐 하는 파일이야?
+# Kafka Cluster Application (Strimzi Kafka + KafkaTopic ×5)
 # ─────────────────────────────────────────────────────────────────────────
-# Strimzi 라는 Apache Kafka 운영 도구를 클러스터에 설치하는 Application.
-#
-# Strimzi 가 하는 일:
-#   - 'Kafka' 라는 K8s 리소스 종류를 만들어줌
-#   - "Kafka 클러스터 띄워줘 (KRaft 모드, broker 3개)" 라고 yaml 한 장에 시킴
-#   - 우리 주문/재고 비동기 통신 (order.pending, order.inventory_reserved 같은 토픽)에 사용
-#
-# Sync Wave -20: CNPG와 같은 그룹 (operator는 다른 거 만들기 전에 먼저 떠야 해서)
+# platform/data/_kafka/ 폴더 watch:
+#   - kafka-cluster.yaml : KafkaNodePool ×2 + Kafka 클러스터
+#   - topics.yaml        : KafkaTopic ×5 (PDF 부록 A)
 # ─────────────────────────────────────────────────────────────────────────
-
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: strimzi-operator
+  name: kafka-cluster
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-20"
+    argocd.argoproj.io/sync-wave: "-10"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: platform
-
   source:
-    repoURL: https://strimzi.io/charts            # Strimzi 공식 Helm 차트 저장소
-    chart: strimzi-kafka-operator
-    targetRevision: 0.45.0                        # 픽스 (cutoff 2026-01 기준 안정)
-    helm:
-      releaseName: strimzi
-
+    repoURL: https://github.com/melanieing/msa-argocd-manifest.git
+    targetRevision: HEAD
+    path: platform/data/_kafka
+    directory:
+      recurse: true
   destination:
     server: https://kubernetes.default.svc
-    namespace: kafka-system                       # Strimzi 와 Kafka 클러스터가 살 네임스페이스
-
+    namespace: data
   syncPolicy:
     automated:
       prune: true

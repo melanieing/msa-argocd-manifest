@@ -1,0 +1,65 @@
+# ─────────────────────────────────────────────────────────────────────────
+# Redis Cluster (ot-helm/redis-operator 의 RedisCluster CRD)
+# ─────────────────────────────────────────────────────────────────────────
+# 우리가 Redis 를 쓰는 두 용도:
+#   1) inventory 캐시 — Lua 원자 연산으로 재고 차감 (PDF 6.1, 6.3절)
+#   2) Redisson 분산락 — 동시성 제어
+#
+# 클러스터 모드 vs 단일:
+#   PDF 5.3절 명시: "3 master + 3 replica" 클러스터 모드 사용.
+#   그래야 한 노드 다운돼도 살아남고, 데이터 자동 sharding 도 됨.
+#
+# 비밀번호:
+#   Secret 으로 관리. 학습용이라 평문 Secret 으로 시작 (운영급은 Sealed Secrets).
+# ─────────────────────────────────────────────────────────────────────────
+
+# ─── 비밀번호 Secret ──────────────────────────────────────────────
+# ⚠️ 학습용. 운영에서는 Sealed Secrets 또는 외부 Vault 권장.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-secret
+  namespace: data
+type: Opaque
+stringData:
+  # 'inventory-service' 는 docker-compose 에서 쓰던 비밀번호와 같음 (PDF 외 우리 컨벤션)
+  password: "inventory-service"
+---
+# ─── RedisCluster CRD ─────────────────────────────────────────────
+apiVersion: redis.redis.opstreelabs.in/v1beta2
+kind: RedisCluster
+metadata:
+  name: redis
+  namespace: data
+spec:
+  clusterSize: 3                                  # master 노드 수 (각 master 마다 replica 1 = 총 6)
+  clusterVersion: v7
+
+  # Redis 6.x/7.x 이미지
+  kubernetesConfig:
+    image: quay.io/opstree/redis:v7.0.12
+    imagePullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    redisSecret:
+      name: redis-secret                          # 위 Secret 참조
+      key: password
+
+  # 영속화 설정
+  storage:
+    volumeClaimTemplate:
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi                          # 학습용 작게
+
+  # 모니터링: Prometheus 가 Pod 메트릭 자동 수집
+  redisExporter:
+    enabled: true
+    image: quay.io/opstree/redis-exporter:v1.44.0

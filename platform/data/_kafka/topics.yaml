@@ -1,0 +1,86 @@
+# ─────────────────────────────────────────────────────────────────────────
+# Kafka 토픽들 — PDF 부록 A 의 5개 토픽
+# ─────────────────────────────────────────────────────────────────────────
+# Strimzi 의 KafkaTopic CRD 를 적용하면 entity-operator 가 실제 Kafka 토픽 생성.
+#
+# 토픽 사용 흐름 (PDF 부록 A):
+#   order.pending             : order-worker 가 발행 → inventory-service 가 구독 (Outbox)
+#   order.inventory_reserved  : inventory 가 발행 → order 가 구독 (재고 예약 결과)
+#   order.confirmed           : order 가 발행 → notification, product 가 구독
+#   order.cancelled           : order 가 발행 → inventory, notification 가 구독 (보상)
+#   notification.requested    : 각 서비스가 발행 → notification 이 구독 (알림 트리거)
+#
+# 정책:
+#   partitions=3, replicas=3 → 3-broker 활용 + 동시 처리량 ↑
+#   retention=7d            → 7일간 메시지 보존 (Outbox 재처리/디버깅용)
+# ─────────────────────────────────────────────────────────────────────────
+
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: order.pending
+  namespace: data
+  labels:
+    strimzi.io/cluster: kafka
+spec:
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: 604800000                       # 7 days
+    min.insync.replicas: 2
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: order.inventory_reserved
+  namespace: data
+  labels:
+    strimzi.io/cluster: kafka
+spec:
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: 604800000
+    min.insync.replicas: 2
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: order.confirmed
+  namespace: data
+  labels:
+    strimzi.io/cluster: kafka
+spec:
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: 604800000
+    min.insync.replicas: 2
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: order.cancelled
+  namespace: data
+  labels:
+    strimzi.io/cluster: kafka
+spec:
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: 604800000
+    min.insync.replicas: 2
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: notification.requested
+  namespace: data
+  labels:
+    strimzi.io/cluster: kafka
+spec:
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: 604800000
+    min.insync.replicas: 2

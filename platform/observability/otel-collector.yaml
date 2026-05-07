@@ -31,7 +31,7 @@ spec:
   source:
     repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
     chart: opentelemetry-collector
-    targetRevision: 0.110.x                       # TODO Phase B: 정확한 버전 고정
+    targetRevision: 0.110.5                       # 픽스 (cutoff 2026-01 기준 안정)
     helm:
       releaseName: otel-collector
       # TODO Phase D: 채울 것:

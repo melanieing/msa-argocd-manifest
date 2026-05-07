@@ -30,7 +30,7 @@ spec:
   source:
     repoURL: https://grafana.github.io/helm-charts
     chart: loki                                   # 'loki-stack' 은 deprecated, 'loki' 차트 사용
-    targetRevision: 6.x.x                         # TODO Phase B: 정확한 버전 고정
+    targetRevision: 6.10.0                        # 픽스 (cutoff 2026-01 기준 안정)
     helm:
       releaseName: loki
       # TODO Phase D: 결정해야 할 것:

@@ -28,7 +28,7 @@ spec:
     # OT-Container-Kit 의 Redis Operator (오픈소스, 인기 많음)
     repoURL: https://ot-container-kit.github.io/helm-charts
     chart: redis-operator
-    targetRevision: 0.18.x                        # TODO Phase B: 정확한 버전으로 고정
+    targetRevision: 0.18.0                        # 픽스 (cutoff 2026-01 기준 안정)
     helm:
       releaseName: redis-operator
 

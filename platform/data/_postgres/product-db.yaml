@@ -1,0 +1,17 @@
+# product-service 용 PostgreSQL. user-db.yaml 과 같은 패턴.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: product-db
+  namespace: data
+spec:
+  instances: 2
+  imageName: ghcr.io/cloudnative-pg/postgresql:16
+  storage:
+    size: 5Gi
+  bootstrap:
+    initdb:
+      database: product
+      owner: product_app
+  monitoring:
+    enablePodMonitor: true

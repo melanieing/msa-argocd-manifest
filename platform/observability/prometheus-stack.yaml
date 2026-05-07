@@ -29,7 +29,7 @@ spec:
   source:
     repoURL: https://prometheus-community.github.io/helm-charts
     chart: kube-prometheus-stack
-    targetRevision: 65.x.x                        # TODO Phase B: 정확한 버전 고정
+    targetRevision: 65.5.0                        # 픽스 (cutoff 2026-01 기준 안정)
     helm:
       releaseName: kube-prometheus-stack
       # TODO Phase D: 여기 values 를 채워야 할 것들:

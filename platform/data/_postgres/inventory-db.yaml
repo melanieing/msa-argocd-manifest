@@ -1,0 +1,19 @@
+# inventory-service 용 PostgreSQL.
+# inventory 는 이벤트 소싱 패턴이라 inventory_event 테이블로 트래픽이 많이 들어옴
+# (PDF 6.3, 6.4절). 향후 storage 확장 가능성 ↑
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: inventory-db
+  namespace: data
+spec:
+  instances: 2
+  imageName: ghcr.io/cloudnative-pg/postgresql:16
+  storage:
+    size: 5Gi                                     # 운영급에서는 더 큼
+  bootstrap:
+    initdb:
+      database: inventory
+      owner: inventory_app
+  monitoring:
+    enablePodMonitor: true

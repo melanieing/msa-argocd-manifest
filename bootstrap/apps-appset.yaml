@@ -1,10 +1,8 @@
 # ─────────────────────────────────────────────────────────────────────────
-# 이 파일은 뭐 하는 파일이야?
-# ─────────────────────────────────────────────────────────────────────────
 # 5개 마이크로서비스(user, product, inventory, order, notification)를
-# Argo CD에 자동 등록해주는 "ApplicationSet" 정의야.
+# Argo CD에 자동 등록해주는 "ApplicationSet" 정의.
 #
-# Application 과 ApplicationSet 의 차이?
+# Application 과 ApplicationSet 의 차이
 #   - Application: 앱 한 개를 직접 정의 (yaml 한 개당 앱 한 개)
 #   - ApplicationSet: 패턴(generator)을 주면 거기 맞춰 Application 여러 개를 자동 생성
 #

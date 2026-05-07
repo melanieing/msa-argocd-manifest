@@ -1,43 +1,38 @@
 # ─────────────────────────────────────────────────────────────────────────
-# 이 파일은 뭐 하는 파일이야?
+# PostgreSQL Clusters Application (CNPG Cluster CRD ×5)
 # ─────────────────────────────────────────────────────────────────────────
-# Strimzi 라는 Apache Kafka 운영 도구를 클러스터에 설치하는 Application.
+# platform/data/_postgres/ 폴더의 매니페스트들을 watch.
+#   - namespace.yaml      : data 네임스페이스
+#   - {user,product,inventory,order,notification}-db.yaml : 5개 CNPG Cluster
 #
-# Strimzi 가 하는 일:
-#   - 'Kafka' 라는 K8s 리소스 종류를 만들어줌
-#   - "Kafka 클러스터 띄워줘 (KRaft 모드, broker 3개)" 라고 yaml 한 장에 시킴
-#   - 우리 주문/재고 비동기 통신 (order.pending, order.inventory_reserved 같은 토픽)에 사용
-#
-# Sync Wave -20: CNPG와 같은 그룹 (operator는 다른 거 만들기 전에 먼저 떠야 해서)
+# Sync Wave -10:
+#   operators(-20) 가 CNPG CRD 를 등록한 후에야 Cluster CRD 적용 가능.
+#   따라서 operators 다음, 마이크로서비스 앱(10) 보다는 먼저.
 # ─────────────────────────────────────────────────────────────────────────
-
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: strimzi-operator
+  name: postgres-clusters
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-20"
+    argocd.argoproj.io/sync-wave: "-10"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: platform
-
   source:
-    repoURL: https://strimzi.io/charts            # Strimzi 공식 Helm 차트 저장소
-    chart: strimzi-kafka-operator
-    targetRevision: 0.45.0                        # 픽스 (cutoff 2026-01 기준 안정)
-    helm:
-      releaseName: strimzi
-
+    repoURL: https://github.com/melanieing/msa-argocd-manifest.git
+    targetRevision: HEAD
+    path: platform/data/_postgres
+    directory:
+      recurse: true                               # _postgres/ 안의 yaml 다 적용
   destination:
     server: https://kubernetes.default.svc
-    namespace: kafka-system                       # Strimzi 와 Kafka 클러스터가 살 네임스페이스
-
+    namespace: data
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true
+      - CreateNamespace=true                      # data namespace 자동 생성
       - ServerSideApply=true

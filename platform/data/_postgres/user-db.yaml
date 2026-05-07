@@ -1,0 +1,33 @@
+# ─────────────────────────────────────────────────────────────────────────
+# user-service 용 PostgreSQL Cluster (CNPG)
+# ─────────────────────────────────────────────────────────────────────────
+# CNPG Cluster CRD 가 만드는 것:
+#   - StatefulSet (primary 1 + replica 1)
+#   - Service (primary 읽기쓰기 + replica 읽기 전용)
+#   - Secret (앱이 사용할 connection string + password)
+#   - PVC (데이터 영속화)
+#
+# 마이크로서비스에서 접근:
+#   host: user-db-rw.data.svc.cluster.local  (읽기쓰기, primary 로 라우팅)
+#   host: user-db-ro.data.svc.cluster.local  (읽기 전용, replica 로 라우팅)
+#   port: 5432
+#   user: 자동 생성 (Secret 참조)
+#   password: 자동 생성 (Secret 참조)
+#   database: user
+# ─────────────────────────────────────────────────────────────────────────
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: user-db
+  namespace: data
+spec:
+  instances: 2                                    # primary 1 + replica 1 (HA 최소 구성)
+  imageName: ghcr.io/cloudnative-pg/postgresql:16  # PDF 4.1절: PostgreSQL 16
+  storage:
+    size: 5Gi                                     # 학습용. 부족하면 늘리기.
+  bootstrap:
+    initdb:
+      database: user                              # 초기 생성될 DB 이름
+      owner: user_app                             # 앱 전용 사용자 (CNPG 가 자동 생성)
+  monitoring:
+    enablePodMonitor: true                        # Prometheus 가 자동 스크래핑하도록
