@@ -1,26 +1,55 @@
+# ─────────────────────────────────────────────────────────────────────────
+# 이 파일은 뭐 하는 파일이야?
+# ─────────────────────────────────────────────────────────────────────────
+# 'platform' 이라는 이름의 AppProject(앱 권한 묶음)를 정의해.
+#
+# AppProject 가 뭐였더라? (다시 한 줄)
+#   - "이 묶음에 속한 Application 들은 이런 권한만 가질 수 있어" 라는 규칙 그룹.
+#   - 폴더 권한 같은 거.
+#
+# 'platform' 묶음의 권한:
+#   - 어디서 가져와도 되는지 (sourceRepos): 우리 매니페스트 레포 + 공식 Helm 차트 레포들
+#   - 어디에 배포해도 되는지 (destinations): 모든 namespace
+#   - 어떤 K8s 리소스를 만들어도 되는지: 모든 종류 (operator는 CRD/ClusterRole 같은 클러스터급 리소스가 필요해서)
+#
+# 'apps' (마이크로서비스용) 와 다른 점:
+#   - platform 은 클러스터급 리소스(CRD, ClusterRole 등) 허용 → operator 설치 가능
+#   - apps 는 namespace 안에서만 놀 수 있음 → 마이크로서비스 격리
+# ─────────────────────────────────────────────────────────────────────────
+
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: platform
+  name: platform                                 # 다른 Application 들이 'project: platform' 으로 참조
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   description: Platform components (operators, data clusters, observability)
+
+  # 이 프로젝트에 속한 Application 들이 source 로 쓸 수 있는 Git/Helm 레포 화이트리스트.
+  # 여기 없는 레포에서 가져오려고 하면 Argo CD가 거부함.
   sourceRepos:
-    - https://github.com/melanieing/msa-argocd-manifest.git
-    - https://cloudnative-pg.github.io/charts
-    - https://strimzi.io/charts
-    - https://ot-container-kit.github.io/helm-charts
-    - https://prometheus-community.github.io/helm-charts
-    - https://grafana.github.io/helm-charts
-    - https://open-telemetry.github.io/opentelemetry-helm-charts
+    - https://github.com/melanieing/msa-argocd-manifest.git           # 우리 매니페스트 레포
+    - https://cloudnative-pg.github.io/charts                          # CNPG (PostgreSQL Operator) 차트
+    - https://strimzi.io/charts                                        # Strimzi (Kafka Operator) 차트
+    - https://ot-container-kit.github.io/helm-charts                   # Redis Operator 차트
+    - https://prometheus-community.github.io/helm-charts               # Prometheus 스택 차트
+    - https://grafana.github.io/helm-charts                            # Loki / Grafana 차트
+    - https://open-telemetry.github.io/opentelemetry-helm-charts       # OpenTelemetry Collector 차트
+
+  # 이 프로젝트 앱들이 배포할 수 있는 K8s 클러스터 + namespace 화이트리스트.
   destinations:
-    - namespace: '*'
+    - namespace: '*'                             # 어떤 namespace든 OK (operator 가 여러 ns에 살 수 있어서)
       server: https://kubernetes.default.svc
+
+  # 만들 수 있는 클러스터급 리소스(=namespace에 종속 안 되는 리소스).
+  # 예: CRD, ClusterRole, ClusterRoleBinding. 별표는 "전부 허용".
   clusterResourceWhitelist:
     - group: '*'
       kind: '*'
+
+  # 만들 수 있는 namespace급 리소스 (Pod, Service, ConfigMap 등). 전부 허용.
   namespaceResourceWhitelist:
     - group: '*'
       kind: '*'

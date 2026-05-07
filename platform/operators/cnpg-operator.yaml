@@ -1,27 +1,52 @@
+# ─────────────────────────────────────────────────────────────────────────
+# 이 파일은 뭐 하는 파일이야?
+# ─────────────────────────────────────────────────────────────────────────
+# CNPG (CloudNativePG) 라는 PostgreSQL 운영 도구를 클러스터에 설치하는 Application.
+#
+# Operator(오퍼레이터)가 뭔데?
+#   - K8s 안에서 "특정 종류의 앱을 알아서 관리해주는 자동화 봇" 같은 거.
+#   - PostgreSQL Operator(=CNPG): "Cluster" 라는 새 K8s 리소스 종류를 만들어주고,
+#     "PostgreSQL 클러스터 1개 띄워줘" 라고 yaml로 시키면 알아서 띄우고 백업도 해줌.
+#
+# 우리는 왜 CNPG를 쓰지?
+#   - 마이크로서비스 5개가 각자 자기 PostgreSQL 을 가져야 함 (Database per Service).
+#   - 5개를 manage 하려면 직접 StatefulSet 짜는 것보다 Operator 가 훨씬 편함.
+#
+# Sync Wave -20 의 의미:
+#   - bootstrap의 platform-of-apps(-50) 가 이 파일을 발견한 후,
+#     같은 platform/ 안의 다른 wave 들 중 가장 먼저 적용됨.
+#   - 다른 platform/data/_postgres/ 안의 'PostgreSQL Cluster CRD' 들이 wave -10 이라서,
+#     CRD 등록(이 Operator)이 -20 으로 먼저 떠야 함.
+# ─────────────────────────────────────────────────────────────────────────
+
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: cnpg-operator
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-20"
+    argocd.argoproj.io/sync-wave: "-20"          # operator는 다른 거 다 제치고 거의 1순위
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: platform
+  project: platform                              # 'platform' AppProject 권한 묶음 소속
+
   source:
+    # CNPG 가 공식 배포하는 Helm 차트 저장소 주소
     repoURL: https://cloudnative-pg.github.io/charts
-    chart: cloudnative-pg
-    targetRevision: 0.22.x  # TODO: pin to a specific version in Phase B
+    chart: cloudnative-pg                        # 차트 이름 (=설치할 컴포넌트)
+    targetRevision: 0.22.x                       # TODO Phase B: 정확한 버전으로 고정 (예: "0.22.1")
     helm:
-      releaseName: cnpg
+      releaseName: cnpg                          # helm install 시 줄 release 이름
+
   destination:
-    server: https://kubernetes.default.svc
-    namespace: cnpg-system
+    server: https://kubernetes.default.svc       # 우리 클러스터 자기 자신
+    namespace: cnpg-system                       # CNPG 가 사는 전용 네임스페이스
+
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true
+      - CreateNamespace=true                     # cnpg-system 네임스페이스 자동 생성
       - ServerSideApply=true

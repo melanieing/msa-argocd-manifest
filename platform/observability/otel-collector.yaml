@@ -1,25 +1,51 @@
+# ─────────────────────────────────────────────────────────────────────────
+# 이 파일은 뭐 하는 파일이야?
+# ─────────────────────────────────────────────────────────────────────────
+# OpenTelemetry Collector 를 클러스터에 설치하는 Application.
+#
+# OpenTelemetry(OTel) 가 뭔데?
+#   - 메트릭/로그/트레이스(분산 추적)를 모으는 표준 규격 + 도구 모음.
+#   - "이 회사는 Datadog 만 쓰고 저 회사는 New Relic 만 쓴다" 같은 벤더 락인을 끊으려고 만든 표준.
+#
+# Collector 의 역할:
+#   - 마이크로서비스가 OTLP(=OTel 의 통신 규격)로 데이터 보내면 받아서,
+#     적절한 백엔드(Prometheus, Loki, Tempo)로 전달.
+#   - 마이크로서비스 → Collector → Prometheus/Loki/Tempo 같은 가운데 다리.
+#
+# Sync Wave 5:
+#   - Prometheus(0), Loki(0) 가 다 뜬 후에 시작해야 의미 있음 (보낼 곳이 있어야 하니).
+# ─────────────────────────────────────────────────────────────────────────
+
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: otel-collector
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-wave: "5"             # Prometheus/Loki 다음에 뜸
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: platform
+
   source:
     repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
     chart: opentelemetry-collector
-    targetRevision: 0.110.x  # TODO: pin to a specific version in Phase B
+    targetRevision: 0.110.x                       # TODO Phase B: 정확한 버전 고정
     helm:
       releaseName: otel-collector
-      # TODO Phase D: deploy as DaemonSet, configure receivers (OTLP gRPC/HTTP),
-      # exporters (prometheus for metrics, loki for logs, tempo for traces).
+      # TODO Phase D: 채울 것:
+      #   - mode: DaemonSet (각 노드에 한 개씩 → Pod 가까이 있어서 빠름)
+      #   - receivers: OTLP gRPC(:4317) + OTLP HTTP(:4318)
+      #   - exporters:
+      #       - prometheus  : 메트릭 → Prometheus
+      #       - loki        : 로그 → Loki
+      #       - otlphttp    : 트레이스 → Tempo (Should/시간 남으면)
+
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
+
   syncPolicy:
     automated:
       prune: true

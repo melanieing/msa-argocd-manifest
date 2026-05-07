@@ -1,3 +1,17 @@
+# ─────────────────────────────────────────────────────────────────────────
+# 이 파일은 뭐 하는 파일이야?
+# ─────────────────────────────────────────────────────────────────────────
+# Redis Operator 를 클러스터에 설치하는 Application.
+#
+# Redis 는 우리 시스템에서 두 가지 용도로 쓰여:
+#   1) 캐시 — 재고 조회를 빠르게 하기 위해 (PDF 6.1절)
+#   2) 분산 락 — Redisson 클라이언트를 통해, 여러 서버가 동시에 같은 데이터 못 건드리도록
+#
+# Operator 는 "RedisCluster 띄워줘 (master 3 + replica 3)" 라고 yaml 한 장이면 띄워줌.
+#
+# Sync Wave -20: 다른 operator 들과 같은 그룹.
+# ─────────────────────────────────────────────────────────────────────────
+
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -9,15 +23,19 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: platform
+
   source:
+    # OT-Container-Kit 의 Redis Operator (오픈소스, 인기 많음)
     repoURL: https://ot-container-kit.github.io/helm-charts
     chart: redis-operator
-    targetRevision: 0.18.x  # TODO: pin to a specific version in Phase B
+    targetRevision: 0.18.x                        # TODO Phase B: 정확한 버전으로 고정
     helm:
       releaseName: redis-operator
+
   destination:
     server: https://kubernetes.default.svc
-    namespace: redis-system
+    namespace: redis-system                       # Operator 가 살 전용 네임스페이스
+
   syncPolicy:
     automated:
       prune: true

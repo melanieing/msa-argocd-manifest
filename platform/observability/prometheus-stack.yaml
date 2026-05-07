@@ -1,3 +1,19 @@
+# ─────────────────────────────────────────────────────────────────────────
+# 이 파일은 뭐 하는 파일이야?
+# ─────────────────────────────────────────────────────────────────────────
+# 'kube-prometheus-stack' 이라는 메가 차트 하나로 다음 4개를 한꺼번에 깔아.
+#   1) Prometheus       ← 메트릭(숫자 지표) 수집/저장 (CPU, 메모리, 요청 수 등)
+#   2) Alertmanager     ← 알림 라우팅 (메트릭이 임계치 넘으면 알림 보냄)
+#   3) Grafana          ← 시각화 대시보드 (Prometheus/Loki 데이터를 그래프로)
+#   4) node-exporter 등 ← 노드/Pod 메트릭 수집 에이전트
+#
+# 한 차트로 묶여있는 이유: 위 4개가 보통 같이 쓰여서 묶음 배포가 표준.
+#
+# Sync Wave 0:
+#   - operator(-20) + 데이터 클러스터(-10) 다 뜬 후에 관측성 시작
+#   - 사실 Prometheus 는 의존성이 적어서 더 일찍 떠도 되는데, 표준 wave 0 에 둠.
+# ─────────────────────────────────────────────────────────────────────────
+
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -9,17 +25,23 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: platform
+
   source:
     repoURL: https://prometheus-community.github.io/helm-charts
     chart: kube-prometheus-stack
-    targetRevision: 65.x.x  # TODO: pin to a specific version in Phase B
+    targetRevision: 65.x.x                        # TODO Phase B: 정확한 버전 고정
     helm:
       releaseName: kube-prometheus-stack
-      # TODO Phase D: provide values for retention, storage class, AlertManager
-      # routing, and Grafana datasources (Prometheus + Loki + optional Tempo).
+      # TODO Phase D: 여기 values 를 채워야 할 것들:
+      #   - 메트릭 보관 기간 (기본 10일 → 비용 보고 줄이거나 늘리기)
+      #   - storageClass (EBS gp3 권장)
+      #   - Alertmanager 라우팅 (이메일/Slack 등)
+      #   - Grafana datasources (Prometheus + Loki + 가능하면 Tempo)
+
   destination:
     server: https://kubernetes.default.svc
-    namespace: monitoring
+    namespace: monitoring                         # 관측성 도구들이 모여 살 네임스페이스
+
   syncPolicy:
     automated:
       prune: true

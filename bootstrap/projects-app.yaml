@@ -1,24 +1,50 @@
+# ─────────────────────────────────────────────────────────────────────────
+# 이 파일은 뭐 하는 파일이야?
+# ─────────────────────────────────────────────────────────────────────────
+# Argo CD가 클러스터에 들어와서 가장 먼저 만드는 "Application(앱)" 정의야.
+# 이 앱이 하는 일은 → projects/ 폴더 안의 yaml들을 읽어서 클러스터에 적용해.
+# projects/ 폴더에는 'AppProject' 라는 권한 묶음 정의가 들어있어.
+#
+# AppProject가 뭔데? (3줄 요약)
+#   - "어떤 Git 레포에서 가져와도 되는지" + "어떤 namespace에 배포해도 되는지"
+#     같은 권한을 묶어둔 그룹.
+#   - 마이크로서비스 앱은 'apps' 프로젝트에, 인프라는 'platform' 프로젝트에 속함.
+#   - 폴더 권한 설정 같은 거라고 보면 돼.
+#
+# 왜 이걸 가장 먼저 만들까?
+#   - 다른 Application들이 "나는 platform 프로젝트 소속이야!"라고 참조해야 해서,
+#     AppProject가 클러스터에 먼저 떠 있어야 해.
+#   - 그래서 sync-wave 값을 -100으로 줘서 "다른 거 다 제치고 1번으로 들어가!" 표시.
+# ─────────────────────────────────────────────────────────────────────────
+
 apiVersion: argoproj.io/v1alpha1
-kind: Application
+kind: Application                                # "Argo CD가 관리하는 앱 한 덩어리" 라는 뜻
 metadata:
-  name: projects
-  namespace: argocd
+  name: projects                                 # 'argocd app list' 에 이 이름으로 뜸
+  namespace: argocd                              # Argo CD 본체가 사는 네임스페이스
   annotations:
+    # sync-wave: 숫자가 작을수록 먼저 동기화됨. 음수도 가능. -100이면 거의 1순위.
     argocd.argoproj.io/sync-wave: "-100"
   finalizers:
+    # 이 Application을 지우면, 이 앱이 만든 자식 리소스들도 같이 지워줘 (안전장치)
     - resources-finalizer.argocd.argoproj.io
 spec:
+  # 위에서 만들 'platform' / 'apps' AppProject가 아직 없는 시점이라
+  # Argo CD가 기본 제공하는 'default' 프로젝트를 잠시 빌려 씀.
   project: default
+
   source:
     repoURL: https://github.com/melanieing/msa-argocd-manifest.git
-    targetRevision: HEAD
-    path: projects
+    targetRevision: HEAD                         # main 브랜치 최신 커밋을 따라감
+    path: projects                               # ← 이 Git 폴더 내용을 클러스터에 적용
+
   destination:
-    server: https://kubernetes.default.svc
-    namespace: argocd
+    server: https://kubernetes.default.svc       # "이 클러스터 자기 자신" 을 의미하는 약속된 주소
+    namespace: argocd                            # AppProject 리소스는 argocd 네임스페이스에 만들어짐
+
   syncPolicy:
     automated:
-      prune: true
-      selfHeal: true
+      prune: true                                # Git에서 yaml 지우면 클러스터에서도 같이 지워줘
+      selfHeal: true                             # 누가 클러스터를 손으로 바꿔도 Git 상태로 자동 복구
     syncOptions:
-      - ServerSideApply=true
+      - ServerSideApply=true                     # K8s에 적용할 때 "서버 측 Apply" 방식으로 (충돌 처리가 깔끔함)

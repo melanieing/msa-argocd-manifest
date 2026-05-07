@@ -1,3 +1,20 @@
+# ─────────────────────────────────────────────────────────────────────────
+# 이 파일은 뭐 하는 파일이야?
+# ─────────────────────────────────────────────────────────────────────────
+# Loki(로키) 라는 로그 수집/저장 도구를 클러스터에 설치하는 Application.
+#
+# Loki = Prometheus 의 로그 버전이라고 보면 됨.
+#   - Pod 들이 stdout 으로 찍는 로그를 모아서 저장
+#   - Grafana 에서 "이 시각의 order-service 로그 좀 보자" 라고 검색 가능
+#   - LogQL 이라는 검색어 문법 사용 (PromQL 닮음)
+#
+# 비용 효율 포인트:
+#   - 라벨 기반 인덱싱(=각 로그에 'pod=order-service' 같은 라벨만 인덱스, 본문은 인덱스 X)
+#   - 그래서 Elasticsearch 같은 풀텍스트 검색 엔진보다 훨씬 저렴
+#
+# Sync Wave 0: Prometheus 와 같은 그룹.
+# ─────────────────────────────────────────────────────────────────────────
+
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -9,17 +26,23 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: platform
+
   source:
     repoURL: https://grafana.github.io/helm-charts
-    chart: loki
-    targetRevision: 6.x.x  # TODO: pin to a specific version in Phase B
+    chart: loki                                   # 'loki-stack' 은 deprecated, 'loki' 차트 사용
+    targetRevision: 6.x.x                         # TODO Phase B: 정확한 버전 고정
     helm:
       releaseName: loki
-      # TODO Phase D: choose monolithic vs. SimpleScalable mode, configure
-      # storage backend (filesystem for cost / S3 for production-grade).
+      # TODO Phase D: 결정해야 할 것:
+      #   - 모드: monolithic(작은 단일 Pod) vs SimpleScalable(읽기/쓰기 분리)
+      #     → 비용 따져서 monolithic 권장 (학습용)
+      #   - 저장소: filesystem(EBS) vs S3
+      #     → 비용 따져서 filesystem 권장. S3는 운영급일 때.
+
   destination:
     server: https://kubernetes.default.svc
-    namespace: monitoring
+    namespace: monitoring                         # Prometheus 와 같은 네임스페이스에 모아둠
+
   syncPolicy:
     automated:
       prune: true

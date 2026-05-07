@@ -1,43 +1,78 @@
+# ─────────────────────────────────────────────────────────────────────────
+# 이 파일은 뭐 하는 파일이야?
+# ─────────────────────────────────────────────────────────────────────────
+# 5개 마이크로서비스(user, product, inventory, order, notification)를
+# Argo CD에 자동 등록해주는 "ApplicationSet" 정의야.
+#
+# Application 과 ApplicationSet 의 차이?
+#   - Application: 앱 한 개를 직접 정의 (yaml 한 개당 앱 한 개)
+#   - ApplicationSet: 패턴(generator)을 주면 거기 맞춰 Application 여러 개를 자동 생성
+#
+# 여기서 쓰는 generator: "Git Generator(디렉토리 모드)"
+#   - msa-spring-boot 레포의 charts/services/ 폴더를 스캔
+#   - 그 아래 디렉토리 하나 = Application 하나
+#   - 예: charts/services/user-api-gateway/ 가 생기면 → 'user-api-gateway' 앱 자동 등록
+#         charts/services/order-service/ 가 생기면 → 'order-service' 앱 자동 등록
+#
+# 즉 마이크로서비스를 추가할 때 우리가 할 일은:
+#   msa-spring-boot 레포에 charts/services/<서비스명>/ 폴더 만들고 Helm 차트 넣어서 push.
+#   끝. 이 파일은 건드릴 필요 없음.
+#
+# {{ .path.basename }} 이게 뭐야?
+#   - Argo CD ApplicationSet 의 템플릿 문법 (Go template).
+#   - .path.path = "charts/services/order-service" 같은 전체 경로
+#   - .path.basename = "order-service" 같은 폴더 이름만 추출
+# ─────────────────────────────────────────────────────────────────────────
+
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
   name: microservices
   namespace: argocd
   annotations:
+    # AppProject(-100) → platform-of-apps(-50) → 이 ApplicationSet(0) 순서.
     argocd.argoproj.io/sync-wave: "0"
 spec:
-  goTemplate: true
+  goTemplate: true                               # Go template 문법 사용 (요즘 Argo CD 권장 모드)
   goTemplateOptions:
-    - missingkey=error
+    - missingkey=error                           # 템플릿에 없는 변수 쓰면 에러 (오타 방지용)
+
   generators:
     - git:
         repoURL: https://github.com/melanieing/msa-spring-boot.git
         revision: main
         directories:
-          - path: charts/services/*
+          - path: charts/services/*              # ← 이 패턴에 맞는 폴더마다 Application 1개씩 생성
+
   template:
     metadata:
+      # 폴더 이름이 그대로 Application 이름이 됨 (예: 'order-service')
       name: '{{ .path.basename }}'
       annotations:
+        # 마이크로서비스는 가장 마지막에 sync (DB/Kafka/Redis 다 뜬 후)
         argocd.argoproj.io/sync-wave: "10"
       finalizers:
         - resources-finalizer.argocd.argoproj.io
     spec:
-      project: apps
+      project: apps                              # 'apps' AppProject 소속 (마이크로서비스 권한 묶음)
+
       source:
         repoURL: https://github.com/melanieing/msa-spring-boot.git
         targetRevision: main
-        path: '{{ .path.path }}'
+        path: '{{ .path.path }}'                 # 예: 'charts/services/order-service'
         helm:
           valueFiles:
-            - values.yaml
+            - values.yaml                        # 차트 폴더 내 values.yaml 사용
+
       destination:
         server: https://kubernetes.default.svc
+        # 폴더 이름과 같은 namespace에 배포 (예: 'order-service' → 'order-service' namespace)
         namespace: '{{ .path.basename }}'
+
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
         syncOptions:
-          - CreateNamespace=true
+          - CreateNamespace=true                 # namespace 없으면 자동 생성
           - ServerSideApply=true
