@@ -1,7 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────
-# 이 파일은 뭐 하는 파일이야?
-# ─────────────────────────────────────────────────────────────────────────
-# 'kube-prometheus-stack' 이라는 메가 차트 하나로 다음 4개를 한꺼번에 깔아.
+# 'kube-prometheus-stack' 이라는 메가 차트 하나로 다음 4개를 한꺼번에 깔게 됨.
 #   1) Prometheus       ← 메트릭(숫자 지표) 수집/저장 (CPU, 메모리, 요청 수 등)
 #   2) Alertmanager     ← 알림 라우팅 (메트릭이 임계치 넘으면 알림 보냄)
 #   3) Grafana          ← 시각화 대시보드 (Prometheus/Loki 데이터를 그래프로)
@@ -29,7 +27,7 @@ spec:
   source:
     repoURL: https://prometheus-community.github.io/helm-charts
     chart: kube-prometheus-stack
-    targetRevision: 65.5.0                        # 픽스 (cutoff 2026-01 기준 안정)
+    targetRevision: 84.5.0                        # 2026-05-01 release
     helm:
       releaseName: kube-prometheus-stack
       # TODO Phase D: 여기 values 를 채워야 할 것들:

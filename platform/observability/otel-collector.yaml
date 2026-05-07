@@ -1,9 +1,7 @@
 # ─────────────────────────────────────────────────────────────────────────
-# 이 파일은 뭐 하는 파일이야?
-# ─────────────────────────────────────────────────────────────────────────
 # OpenTelemetry Collector 를 클러스터에 설치하는 Application.
 #
-# OpenTelemetry(OTel) 가 뭔데?
+# OpenTelemetry(OTel)?
 #   - 메트릭/로그/트레이스(분산 추적)를 모으는 표준 규격 + 도구 모음.
 #   - "이 회사는 Datadog 만 쓰고 저 회사는 New Relic 만 쓴다" 같은 벤더 락인을 끊으려고 만든 표준.
 #
@@ -31,7 +29,7 @@ spec:
   source:
     repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
     chart: opentelemetry-collector
-    targetRevision: 0.110.5                       # 픽스 (cutoff 2026-01 기준 안정)
+    targetRevision: 0.153.0                       # 2026-04-30 release
     helm:
       releaseName: otel-collector
       # TODO Phase D: 채울 것:

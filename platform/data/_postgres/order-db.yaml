@@ -1,5 +1,5 @@
 # order-service 용 PostgreSQL.
-# Outbox 패턴 (PDF 6.5절) 으로 OrderInventoryRequestOutbox 테이블이 있어
+# Outbox 패턴 (제안서 6.5절) 으로 OrderInventoryRequestOutbox 테이블이 있어
 # 주문 트래픽 = 동일 트랜잭션 내 INSERT 2건.
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster

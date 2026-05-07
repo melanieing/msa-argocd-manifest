@@ -1,7 +1,7 @@
 # ─────────────────────────────────────────────────────────────────────────
 # Redis Cluster (ot-helm/redis-operator 의 RedisCluster CRD)
 # ─────────────────────────────────────────────────────────────────────────
-# 우리가 Redis 를 쓰는 두 용도:
+# Redis를 쓰는 두 용도:
 #   1) inventory 캐시 — Lua 원자 연산으로 재고 차감 (PDF 6.1, 6.3절)
 #   2) Redisson 분산락 — 동시성 제어
 #
@@ -37,7 +37,7 @@ spec:
 
   # Redis 6.x/7.x 이미지
   kubernetesConfig:
-    image: quay.io/opstree/redis:v7.0.12
+    image: quay.io/opstree/redis:v7.4.8           # Redis 7.4 최신 patch (2026-03)
     imagePullPolicy: IfNotPresent
     resources:
       requests:
@@ -62,4 +62,4 @@ spec:
   # 모니터링: Prometheus 가 Pod 메트릭 자동 수집
   redisExporter:
     enabled: true
-    image: quay.io/opstree/redis-exporter:v1.44.0
+    image: quay.io/opstree/redis-exporter:v1.83.0  # 2026-05-01 최신

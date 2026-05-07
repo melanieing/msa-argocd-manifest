@@ -1,6 +1,4 @@
 # ─────────────────────────────────────────────────────────────────────────
-# 이 파일은 뭐 하는 파일이야?
-# ─────────────────────────────────────────────────────────────────────────
 # Loki(로키) 라는 로그 수집/저장 도구를 클러스터에 설치하는 Application.
 #
 # Loki = Prometheus 의 로그 버전이라고 보면 됨.
@@ -30,7 +28,7 @@ spec:
   source:
     repoURL: https://grafana.github.io/helm-charts
     chart: loki                                   # 'loki-stack' 은 deprecated, 'loki' 차트 사용
-    targetRevision: 6.10.0                        # 픽스 (cutoff 2026-01 기준 안정)
+    targetRevision: 7.0.0                         # 최신 안정 (app: Loki 3.6.7)
     helm:
       releaseName: loki
       # TODO Phase D: 결정해야 할 것:

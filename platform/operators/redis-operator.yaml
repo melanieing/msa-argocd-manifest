@@ -1,9 +1,7 @@
 # ─────────────────────────────────────────────────────────────────────────
-# 이 파일은 뭐 하는 파일이야?
-# ─────────────────────────────────────────────────────────────────────────
 # Redis Operator 를 클러스터에 설치하는 Application.
 #
-# Redis 는 우리 시스템에서 두 가지 용도로 쓰여:
+# Redis 는 우리 시스템에서 두 가지 용도로 쓰임:
 #   1) 캐시 — 재고 조회를 빠르게 하기 위해 (PDF 6.1절)
 #   2) 분산 락 — Redisson 클라이언트를 통해, 여러 서버가 동시에 같은 데이터 못 건드리도록
 #
@@ -28,7 +26,7 @@ spec:
     # OT-Container-Kit 의 Redis Operator (오픈소스, 인기 많음)
     repoURL: https://ot-container-kit.github.io/helm-charts
     chart: redis-operator
-    targetRevision: 0.18.0                        # 픽스 (cutoff 2026-01 기준 안정)
+    targetRevision: 0.24.0                        # 2026-03-13 release
     helm:
       releaseName: redis-operator
 

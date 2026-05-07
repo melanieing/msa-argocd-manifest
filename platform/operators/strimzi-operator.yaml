@@ -1,6 +1,4 @@
 # ─────────────────────────────────────────────────────────────────────────
-# 이 파일은 뭐 하는 파일이야?
-# ─────────────────────────────────────────────────────────────────────────
 # Strimzi 라는 Apache Kafka 운영 도구를 클러스터에 설치하는 Application.
 #
 # Strimzi 가 하는 일:
@@ -26,7 +24,7 @@ spec:
   source:
     repoURL: https://strimzi.io/charts            # Strimzi 공식 Helm 차트 저장소
     chart: strimzi-kafka-operator
-    targetRevision: 0.45.0                        # 픽스 (cutoff 2026-01 기준 안정)
+    targetRevision: 1.0.0                         # 2026-04-28 메이저 마일스톤. Kafka 4.x만 지원.
     helm:
       releaseName: strimzi
 

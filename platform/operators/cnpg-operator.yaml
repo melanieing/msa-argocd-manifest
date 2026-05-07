@@ -1,9 +1,7 @@
 # ─────────────────────────────────────────────────────────────────────────
-# 이 파일은 뭐 하는 파일이야?
-# ─────────────────────────────────────────────────────────────────────────
 # CNPG (CloudNativePG) 라는 PostgreSQL 운영 도구를 클러스터에 설치하는 Application.
 #
-# Operator(오퍼레이터)가 뭔데?
+# Operator(오퍼레이터)?
 #   - K8s 안에서 "특정 종류의 앱을 알아서 관리해주는 자동화 봇" 같은 거.
 #   - PostgreSQL Operator(=CNPG): "Cluster" 라는 새 K8s 리소스 종류를 만들어주고,
 #     "PostgreSQL 클러스터 1개 띄워줘" 라고 yaml로 시키면 알아서 띄우고 백업도 해줌.
@@ -35,7 +33,7 @@ spec:
     # CNPG 가 공식 배포하는 Helm 차트 저장소 주소
     repoURL: https://cloudnative-pg.github.io/charts
     chart: cloudnative-pg                        # 차트 이름 (=설치할 컴포넌트)
-    targetRevision: 0.22.1                       # 픽스 (cutoff 2026-01 기준 안정)
+    targetRevision: 0.28.0                       # 2026-04-01 release, 2026-05 기준 최신 안정
     helm:
       releaseName: cnpg                          # helm install 시 줄 release 이름
 

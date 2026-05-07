@@ -1,4 +1,4 @@
-# notification-service 용 PostgreSQL. 알림 발송 이력 저장 (PDF 2.2절).
+# notification-service 용 PostgreSQL. 알림 발송 이력 저장 (제안서 2.2절).
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
