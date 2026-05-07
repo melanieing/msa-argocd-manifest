@@ -1,0 +1,1 @@
+# msa-argocd-manifest
