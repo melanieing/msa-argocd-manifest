@@ -4,6 +4,9 @@ Argo CD가 클러스터 상태의 **단일 소스 오브 트루스**(SSOT)로 �
 Market Service MSA 프로젝트의 **클러스터 부트스트랩 + 5개 마이크로서비스 배포**를
 GitOps로 일괄 관리한다.
 
+> 📋 **전체 기술 스택 + 버전 목록**:
+> [`msa-provisioning/STACK.md`](https://github.com/melanieing/msa-provisioning/blob/main/STACK.md)
+
 ## 배경
 
 본 리포는 `msa-provisioning/ansible/argocd-setup.yaml`의 root Application이 가리키는
