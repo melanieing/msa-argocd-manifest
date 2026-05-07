@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: apps
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Market Service microservices (user/product/inventory/order/notification)
+  sourceRepos:
+    - https://github.com/melanieing/msa-spring-boot.git
+  destinations:
+    - namespace: 'user-*'
+      server: https://kubernetes.default.svc
+    - namespace: 'product-*'
+      server: https://kubernetes.default.svc
+    - namespace: 'inventory-*'
+      server: https://kubernetes.default.svc
+    - namespace: 'order-*'
+      server: https://kubernetes.default.svc
+    - namespace: 'notification-*'
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
