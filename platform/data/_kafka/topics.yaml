@@ -15,7 +15,7 @@
 #   retention=7d            → 7일간 메시지 보존 (Outbox 재처리/디버깅용)
 # ─────────────────────────────────────────────────────────────────────────
 
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
 metadata:
   name: order.pending
@@ -29,7 +29,7 @@ spec:
     retention.ms: 604800000                       # 7 days
     min.insync.replicas: 2
 ---
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
 metadata:
   name: order.inventory_reserved
@@ -43,7 +43,7 @@ spec:
     retention.ms: 604800000
     min.insync.replicas: 2
 ---
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
 metadata:
   name: order.confirmed
@@ -57,7 +57,7 @@ spec:
     retention.ms: 604800000
     min.insync.replicas: 2
 ---
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
 metadata:
   name: order.cancelled
@@ -71,7 +71,7 @@ spec:
     retention.ms: 604800000
     min.insync.replicas: 2
 ---
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
 metadata:
   name: notification.requested

@@ -13,7 +13,7 @@
 # ─────────────────────────────────────────────────────────────────────────
 
 # ─── Controller 노드 풀 ──────────────────────────────────────────
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaNodePool
 metadata:
   name: controller
@@ -30,7 +30,7 @@ spec:
     deleteClaim: false
 ---
 # ─── Broker 노드 풀 ───────────────────────────────────────────────
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaNodePool
 metadata:
   name: broker
@@ -47,7 +47,7 @@ spec:
     deleteClaim: false
 ---
 # ─── Kafka 클러스터 본체 ──────────────────────────────────────────
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: Kafka
 metadata:
   name: kafka                                     # 'kafka' 라는 이름의 클러스터
