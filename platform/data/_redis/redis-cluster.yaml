@@ -20,13 +20,15 @@ kind: Secret
 metadata:
   name: redis-secret
   namespace: data
-  # reflector 가 'inventory-service' namespace 로 자동 복제 (Issue L). inventory 만
-  # Redis 사용 (캐시 + Redisson 분산락) — 다른 backend 는 Redis 안 씀.
+  # reflector 가 두 ns 로 자동 복제 (Issue L + C2):
+  #   - inventory-service (inventory 캐시 + Redisson 분산락)
+  #   - user-api-gateway  (C2 Rate Limit — Redisson RRateLimiter, 2026-05-12 추가)
+  # reflector 의 reflection-*-namespaces 는 regex pattern 이라 '|' 로 union 표현.
   annotations:
     reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
-    reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces: "inventory-service"
+    reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces: "inventory-service|user-api-gateway"
     reflector.v1.k8s.emberstack.com/reflection-auto-enabled: "true"
-    reflector.v1.k8s.emberstack.com/reflection-auto-namespaces: "inventory-service"
+    reflector.v1.k8s.emberstack.com/reflection-auto-namespaces: "inventory-service|user-api-gateway"
 type: Opaque
 stringData:
   # 'inventory-service' 는 docker-compose 에서 쓰던 비밀번호와 같음 (PDF 외 우리 컨벤션)
