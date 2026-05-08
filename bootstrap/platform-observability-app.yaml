@@ -23,8 +23,11 @@ spec:
     repoURL: https://github.com/melanieing/msa-argocd-manifest.git
     targetRevision: HEAD
     path: platform/observability
-    directory:
-      recurse: false                               # 서브폴더 없으니 의미 없지만 명시
+    # NOTE: platform-data-app / platform-operators-app 와 달리 directory.recurse 명시 안 함.
+    #   - observability/ 에는 서브폴더 없음 (loki/otel/prometheus yaml 들이 직접 옆에)
+    #   - default 가 recurse: false 라 명시 시 ArgoCD 가 cluster state 에 그 필드를
+    #     serialize 안 해서 OutOfSync 표시 됨 (관찰됨, 2026-05-11). 명시 제거로 default 와
+    #     cluster state 일치 → Synced.
 
   destination:
     server: https://kubernetes.default.svc
