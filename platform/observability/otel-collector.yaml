@@ -32,13 +32,22 @@ spec:
     targetRevision: 0.153.0                       # 2026-04-30 release
     helm:
       releaseName: otel-collector
-      # TODO Phase D: 채울 것:
-      #   - mode: DaemonSet (각 노드에 한 개씩 → Pod 가까이 있어서 빠름)
-      #   - receivers: OTLP gRPC(:4317) + OTLP HTTP(:4318)
-      #   - exporters:
-      #       - prometheus  : 메트릭 → Prometheus
-      #       - loki        : 로그 → Loki
-      #       - otlphttp    : 트레이스 → Tempo (Should/시간 남으면)
+      # OTel Collector chart 는 default values 에 image.repository 가 비어있어 (의도적 — 사용자가 변종 선택).
+      # 'contrib' = 모든 receivers/exporters 포함 (Kafka, Prometheus, Loki 등 다 됨, ~250MB).
+      # 'core' = 작지만 기능 제한. 학습/포트폴리오는 contrib 적합.
+      # mode: deployment = single replica. 다음 라운드 (D2 OTel SDK 통합) 시 daemonset 으로 격상 가능.
+      values: |
+        image:
+          repository: otel/opentelemetry-collector-contrib
+        mode: deployment
+        replicaCount: 1
+        # config 는 chart default (OTLP receiver gRPC:4317 + HTTP:4318 + debug exporter) 사용.
+        # D2 작업 (microservice OTel SDK 통합 + Prometheus/Loki exporter) 시 채울 예정.
+        # 현재는 collector 가 띄워진 채 receiver 만 listening — 부팅 검증 목적.
+        presets:
+          # k8s metadata enrichment (receiver 가 Pod label 자동 attach)
+          kubernetesAttributes:
+            enabled: true
 
   destination:
     server: https://kubernetes.default.svc

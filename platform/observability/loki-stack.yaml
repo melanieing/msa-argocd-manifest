@@ -31,11 +31,50 @@ spec:
     targetRevision: 7.0.0                         # 최신 안정 (app: Loki 3.6.7)
     helm:
       releaseName: loki
-      # TODO Phase D: 결정해야 할 것:
-      #   - 모드: monolithic(작은 단일 Pod) vs SimpleScalable(읽기/쓰기 분리)
-      #     → 비용 따져서 monolithic 권장 (학습용)
-      #   - 저장소: filesystem(EBS) vs S3
-      #     → 비용 따져서 filesystem 권장. S3는 운영급일 때.
+      # Loki 7.x chart 는 default 가 SimpleScalable (write/read/backend 분리, S3 storage 필수).
+      # 우리는 학습용 + S3 bucket 미구성이라 SingleBinary mode + filesystem storage 채택.
+      # 추후 D7 작업 시 S3 도입하면 SimpleScalable 로 격상 가능.
+      values: |
+        deploymentMode: SingleBinary
+        loki:
+          auth_enabled: false
+          commonConfig:
+            replication_factor: 1
+          storage:
+            type: filesystem
+          schemaConfig:
+            configs:
+              - from: "2024-01-01"
+                store: tsdb
+                object_store: filesystem
+                schema: v13
+                index:
+                  prefix: loki_index_
+                  period: 24h
+          pattern_ingester:
+            enabled: false
+        singleBinary:
+          replicas: 1
+          persistence:
+            enabled: true
+            size: 5Gi
+        # SimpleScalable/Distributed 모드 component 들 비활성 (SingleBinary 와 중복 방지)
+        write:
+          replicas: 0
+        read:
+          replicas: 0
+        backend:
+          replicas: 0
+        chunksCache:
+          enabled: false
+        resultsCache:
+          enabled: false
+        gateway:
+          enabled: false
+        test:
+          enabled: false
+        lokiCanary:
+          enabled: false
 
   destination:
     server: https://kubernetes.default.svc
