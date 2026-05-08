@@ -17,3 +17,10 @@ spec:
       owner: order_app
   monitoring:
     enablePodMonitor: true
+  # CNPG 자동생성 'order-db-app' Secret 을 'order-service' ns 로 reflector 가 자동 복제 (Issue L)
+  inheritedMetadata:
+    annotations:
+      reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
+      reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces: "order-service"
+      reflector.v1.k8s.emberstack.com/reflection-auto-enabled: "true"
+      reflector.v1.k8s.emberstack.com/reflection-auto-namespaces: "order-service"

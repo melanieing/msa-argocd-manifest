@@ -1,0 +1,57 @@
+# ─────────────────────────────────────────────────────────────────────────
+# emberstack/reflector — Cross-namespace Secret/ConfigMap 자동 복제
+# ─────────────────────────────────────────────────────────────────────────
+# 문제 (Issue L):
+#   - CNPG 의 Cluster CRD 는 PostgreSQL 비밀번호를 '<cluster>-app' Secret 으로
+#     자동 생성하지만 그 Secret 은 'data' namespace 에 산다.
+#   - 마이크로서비스 Pod 는 자기 namespace (예: 'inventory-service') 에 산다.
+#   - K8s 의 valueFrom.secretKeyRef 는 cross-namespace 안 됨 → password 주입 실패.
+#   - 같은 문제: redis-secret (데이터 ns) → inventory-service ns 의 Pod 가 사용해야 함.
+#
+# 해결책 — reflector:
+#   - source Secret 에 reflector annotation 붙이면 다른 ns 로 자동 복제.
+#   - CNPG 는 'spec.inheritedMetadata.annotations' 로 자동생성 Secret 에 annotation
+#     상속 가능 → CNPG Cluster yaml 에 annotation 한 번만 박으면 끝.
+#   - redis-secret 도 직접 annotation 추가.
+#
+# Sync Wave -20:
+#   - 다른 operator (cnpg/strimzi/redis) 와 같은 wave. 부모 platform-operators-app
+#     (-50) 가 끝나면 같이 install. CNPG Cluster (wave -10, data-app 자식) 가 sync
+#     되어 Secret 생성될 시점에는 reflector 이미 떠 있음 → 즉시 복제.
+#
+# 학습 가치 (포트폴리오 답변):
+#   - "GitOps + Operator 패턴에서 cross-namespace Secret 의 한계를 발견.
+#      reflector 도입으로 CNPG 의 inheritedMetadata 한 줄로 5개 service 의
+#      DB 비밀번호 분배를 자동화."
+# ─────────────────────────────────────────────────────────────────────────
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: reflector-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-20"            # cnpg/strimzi/redis 와 동일 wave
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: platform
+
+  source:
+    repoURL: https://emberstack.github.io/helm-charts
+    chart: reflector
+    targetRevision: 10.0.41                        # 2026-05-08 release, app + chart 동기 버전
+    helm:
+      releaseName: reflector
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: reflector-system                    # 전용 namespace (operator 패턴 일관성)
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

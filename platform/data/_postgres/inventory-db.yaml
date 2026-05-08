@@ -17,3 +17,12 @@ spec:
       owner: inventory_app
   monitoring:
     enablePodMonitor: true
+  # CNPG 가 자동 생성하는 '<cluster>-app' Secret 에 reflector annotation 상속 →
+  # 'inventory-service' namespace 로 자동 복제 (Issue L). microservice Pod 의
+  # secretKeyRef 가 자기 ns 에서 inventory-db-app 을 찾을 수 있게 됨.
+  inheritedMetadata:
+    annotations:
+      reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
+      reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces: "inventory-service"
+      reflector.v1.k8s.emberstack.com/reflection-auto-enabled: "true"
+      reflector.v1.k8s.emberstack.com/reflection-auto-namespaces: "inventory-service"
