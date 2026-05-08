@@ -4,7 +4,7 @@
 # 'platform' 과 어떻게 다른가?
 #   - sourceRepos: 매니페스트 레포가 아니라 코드+차트가 있는 msa-spring-boot 레포만 허용
 #   - destinations: 정해진 namespace 패턴(user-*, product-*, ...)에만 배포 허용
-#   - clusterResourceWhitelist: 비어있음 → 클러스터급 리소스 못 만들게 막음
+#   - clusterResourceWhitelist: Namespace 만 허용 → 그 외 ClusterRole/CRD 등은 차단
 #       (마이크로서비스가 실수로 ClusterRole 같은 거 만드는 사고 방지)
 #
 # 즉 마이크로서비스를 좁은 권한 안에 가둬두는 안전장치.
@@ -39,9 +39,14 @@ spec:
     - namespace: 'notification-*'
       server: https://kubernetes.default.svc
 
-  # 빈 배열 = "클러스터급 리소스(CRD, ClusterRole 등) 절대 못 만든다".
-  # 마이크로서비스에는 이런 권한이 필요 없으니 차단해서 안전성 ↑
-  clusterResourceWhitelist: []
+  # Namespace 만 허용. ApplicationSet 의 CreateNamespace=true 가 자식 앱의 namespace
+  # (user-api-gateway, product-service 등) 를 만들 수 있게 해야 함.
+  # Namespace 도 클러스터급 리소스라 whitelist 비면 거부됨 → 첫 부트스트랩 (2026-05-09) 시
+  # "resource :Namespace is not permitted in project apps" 에러로 차단됐었음.
+  # 그 외 CRD/ClusterRole 등은 여전히 차단해서 안전성 유지.
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
 
   # namespace 안에 만들 수 있는 리소스는 전부 허용 (Deployment, Service, ConfigMap, Secret, HPA 등)
   namespaceResourceWhitelist:

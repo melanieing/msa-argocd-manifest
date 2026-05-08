@@ -25,8 +25,11 @@ PDF 5.5.3절 "두 가지 용도로 동시 사용" 권장 패턴을 따른다.
 ```
 .
 ├── bootstrap/                # Argo CD root Application의 진입점
-│   ├── platform-of-apps.yaml # platform/ 디렉토리를 watch하는 App
-│   └── apps-appset.yaml      # 마이크로서비스용 ApplicationSet (Git Generator)
+│   ├── projects-app.yaml             # AppProject 들을 만드는 App (-100)
+│   ├── platform-operators-app.yaml   # operators/ 만 watch (-50)
+│   ├── platform-data-app.yaml        # data/ 만 watch, recurse:false (-40)
+│   ├── platform-observability-app.yaml # observability/ 만 watch (-30)
+│   └── apps-appset.yaml              # 마이크로서비스 ApplicationSet (0)
 ├── projects/                 # AppProject 정의 (권한 분리)
 │   ├── platform-project.yaml
 │   └── apps-project.yaml

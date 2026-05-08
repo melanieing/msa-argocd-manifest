@@ -11,10 +11,10 @@
 #   - 5개를 manage 하려면 직접 StatefulSet 짜는 것보다 Operator 가 훨씬 편함.
 #
 # Sync Wave -20 의 의미:
-#   - bootstrap의 platform-of-apps(-50) 가 이 파일을 발견한 후,
-#     같은 platform/ 안의 다른 wave 들 중 가장 먼저 적용됨.
-#   - 다른 platform/data/_postgres/ 안의 'PostgreSQL Cluster CRD' 들이 wave -10 이라서,
-#     CRD 등록(이 Operator)이 -20 으로 먼저 떠야 함.
+#   - bootstrap의 platform-operators-app(-50) 가 이 파일을 발견한 후,
+#     형제 자식 (strimzi/redis-operator) 와 함께 wave -20 에서 동시 install.
+#   - 부모(-50) 가 Healthy 되면 platform-data-app(-40) 차례 → 그 자식 wave -10 에서
+#     CR 적용. CRD 는 이 시점에 이미 등록돼 있어야 함.
 # ─────────────────────────────────────────────────────────────────────────
 
 apiVersion: argoproj.io/v1alpha1

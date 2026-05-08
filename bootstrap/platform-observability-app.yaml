@@ -1,0 +1,39 @@
+# ─────────────────────────────────────────────────────────────────────────
+# Platform Observability 부모 Application
+# ─────────────────────────────────────────────────────────────────────────
+# data 가 Healthy 된 후 sync. 자식 3개: prometheus-stack / loki-stack /
+# otel-collector — 각자 외부 helm chart repo 에서 install.
+# 관측성 도구는 PostgreSQL/Kafka/Redis 데이터에 직접 의존하진 않지만, 안전하게
+# 데이터 plane 다 뜬 후 띄워서 metrics/logs scrape 대상이 이미 존재하게 함.
+# ─────────────────────────────────────────────────────────────────────────
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-observability-app
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-30"            # data(-40) 다음, microservices(0) 보다 먼저
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: platform
+
+  source:
+    repoURL: https://github.com/melanieing/msa-argocd-manifest.git
+    targetRevision: HEAD
+    path: platform/observability
+    directory:
+      recurse: false                               # 서브폴더 없으니 의미 없지만 명시
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

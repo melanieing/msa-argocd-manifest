@@ -28,7 +28,8 @@ metadata:
   name: microservices
   namespace: argocd
   annotations:
-    # AppProject(-100) → platform-of-apps(-50) → 이 ApplicationSet(0) 순서.
+    # AppProject(-100) → platform-operators(-50) → data(-40) → observability(-30)
+    # → 이 ApplicationSet(0) → 자식 microservice Apps(10) 순서.
     argocd.argoproj.io/sync-wave: "0"
 spec:
   goTemplate: true                               # Go template 문법 사용 (요즘 Argo CD 권장 모드)
