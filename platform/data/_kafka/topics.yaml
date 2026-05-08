@@ -32,11 +32,15 @@ spec:
 apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
 metadata:
-  name: order.inventory_reserved
+  # RFC 1123: K8s 리소스 이름은 [a-z0-9.-] 만 허용 (underscore 불가).
+  # PDF 부록 A 의 토픽명은 'order.inventory_reserved' (underscore) 라
+  # metadata.name 은 hyphen 으로 두고 spec.topicName 으로 실제 Kafka 토픽명 유지.
+  name: order.inventory-reserved
   namespace: data
   labels:
     strimzi.io/cluster: kafka
 spec:
+  topicName: order.inventory_reserved             # 실제 Kafka 안에서 보이는 이름 (PDF 명세 준수)
   partitions: 3
   replicas: 3
   config:
