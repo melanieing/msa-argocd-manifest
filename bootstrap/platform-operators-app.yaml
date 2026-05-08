@@ -34,8 +34,8 @@ spec:
     repoURL: https://github.com/melanieing/msa-argocd-manifest.git
     targetRevision: HEAD
     path: platform/operators                       # ← operators 서브폴더만
-    directory:
-      recurse: false                               # 서브폴더 없으니 의미 없지만 명시
+    # NOTE: directory.recurse default 가 false. 명시 시 ArgoCD 가 cluster state 에
+    #   그 필드 serialize 안 해서 root-app 에서 cosmetic OutOfSync 표시 됨. default 사용.
 
   destination:
     server: https://kubernetes.default.svc
