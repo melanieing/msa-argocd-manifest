@@ -1,0 +1,123 @@
+# ─────────────────────────────────────────────────────────────────────────
+# D4 (2026-05-12) — Grafana 대시보드 (ConfigMap)
+# ─────────────────────────────────────────────────────────────────────────
+# kube-prometheus-stack 의 Grafana sidecar 가 label
+#   grafana_dashboard: "1"
+# 인 ConfigMap 을 자동 발견 → /tmp/dashboards/ 에 mount → Grafana 가 자동 import.
+#
+# 학습용 2 대시보드:
+#   1. msa-overview        : 5 microservice 의 OTel HTTP latency + RPS
+#   2. msa-kafka            : Kafka topic / consumer group lag (Strimzi 메트릭)
+#
+# 대시보드 JSON 은 단순 패널 — Prometheus query 만 정의. 실 운영급은 Grafana
+# UI 에서 만든 후 export 해서 추가하는 패턴 권장.
+# ─────────────────────────────────────────────────────────────────────────
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-msa-overview
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"               # ← Grafana sidecar 자동 발견 label
+data:
+  msa-overview.json: |
+    {
+      "title": "MSA Overview (D4)",
+      "uid": "msa-overview",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "time": { "from": "now-15m", "to": "now" },
+      "panels": [
+        {
+          "type": "timeseries",
+          "title": "HTTP RPS by service",
+          "id": 1,
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum by (service_name) (rate(otel_http_server_duration_milliseconds_count[1m]))",
+              "legendFormat": "{{service_name}}",
+              "refId": "A"
+            }
+          ],
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
+        },
+        {
+          "type": "timeseries",
+          "title": "HTTP Latency P95 by service (ms)",
+          "id": 2,
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(otel_http_server_duration_milliseconds_bucket[1m])))",
+              "legendFormat": "{{service_name}}",
+              "refId": "A"
+            }
+          ],
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
+        },
+        {
+          "type": "stat",
+          "title": "Pod 상태 (Running)",
+          "id": 3,
+          "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 },
+          "targets": [
+            {
+              "expr": "count(kube_pod_status_phase{phase=\"Running\",namespace=~\"user-api-gateway|product-service|order-service|inventory-service|notification-service\"}) ",
+              "refId": "A"
+            }
+          ],
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
+        }
+      ]
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-msa-kafka
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  msa-kafka.json: |
+    {
+      "title": "MSA Kafka (D4)",
+      "uid": "msa-kafka",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "time": { "from": "now-15m", "to": "now" },
+      "panels": [
+        {
+          "type": "timeseries",
+          "title": "Kafka Topic Bytes In Rate",
+          "id": 1,
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum by (topic) (rate(kafka_server_brokertopicmetrics_bytesin_total[1m]))",
+              "legendFormat": "{{topic}}",
+              "refId": "A"
+            }
+          ],
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
+        },
+        {
+          "type": "timeseries",
+          "title": "Kafka Consumer Group Lag (notification-service-group)",
+          "id": 2,
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "targets": [
+            {
+              "expr": "kafka_consumergroup_lag{consumergroup=\"notification-service-group\"}",
+              "legendFormat": "{{topic}} / partition {{partition}}",
+              "refId": "A"
+            }
+          ],
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
+        }
+      ]
+    }
