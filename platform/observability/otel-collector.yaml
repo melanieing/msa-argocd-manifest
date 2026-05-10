@@ -41,13 +41,67 @@ spec:
           repository: otel/opentelemetry-collector-contrib
         mode: deployment
         replicaCount: 1
-        # config 는 chart default (OTLP receiver gRPC:4317 + HTTP:4318 + debug exporter) 사용.
-        # D2 작업 (microservice OTel SDK 통합 + Prometheus/Loki exporter) 시 채울 예정.
-        # 현재는 collector 가 띄워진 채 receiver 만 listening — 부팅 검증 목적.
         presets:
           # k8s metadata enrichment (receiver 가 Pod label 자동 attach)
           kubernetesAttributes:
             enabled: true
+        # D3 fine-tune (2026-05-12) — receivers OTLP + exporters Prometheus/debug + pipelines.
+        # 5 microservice 의 OTel agent (D2) 가 OTLP gRPC 4317 로 송신.
+        # - traces: debug exporter (Tempo 미설치 — D5 시 격상). 또는 stdout 로그로만.
+        # - metrics: prometheus exporter (Prometheus 가 collector 의 :8889 에서 scrape)
+        # - logs: skip (microservice 가 OTEL_LOGS_EXPORTER=none, Loki 는 stdout 직접 수집)
+        config:
+          receivers:
+            otlp:
+              protocols:
+                grpc:
+                  endpoint: 0.0.0.0:4317
+                http:
+                  endpoint: 0.0.0.0:4318
+          processors:
+            batch: {}
+            memory_limiter:
+              check_interval: 1s
+              limit_percentage: 75
+              spike_limit_percentage: 15
+          exporters:
+            debug:
+              verbosity: basic
+            prometheus:
+              endpoint: 0.0.0.0:8889
+              namespace: otel
+              send_timestamps: true
+              metric_expiration: 5m
+          service:
+            pipelines:
+              traces:
+                receivers: [otlp]
+                processors: [memory_limiter, batch]
+                exporters: [debug]            # Tempo 도입 시 otlphttp/otlp 로 변경
+              metrics:
+                receivers: [otlp]
+                processors: [memory_limiter, batch]
+                exporters: [debug, prometheus]
+        # Prometheus scrape 위해 추가 port 노출
+        ports:
+          otlp:
+            enabled: true
+            containerPort: 4317
+            servicePort: 4317
+          otlp-http:
+            enabled: true
+            containerPort: 4318
+            servicePort: 4318
+          prom-export:
+            enabled: true
+            containerPort: 8889
+            servicePort: 8889
+            protocol: TCP
+        # Prometheus operator 가 PodMonitor 로 collector 의 metric 자동 scrape
+        podMonitor:
+          enabled: true
+          metricsEndpoints:
+            - port: prom-export
 
   destination:
     server: https://kubernetes.default.svc
